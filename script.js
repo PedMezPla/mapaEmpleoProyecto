@@ -273,11 +273,20 @@ function renderJobs() {
   });
 
   const total = filtered.length;
-  const counts = {};
-  filtered.forEach(job => {
-    const community = job.community || job.province || 'Sin región';
-    counts[community] = (counts[community] || 0) + 1;
-  });
+  let counts = {};
+  const hasCoords = filtered.some(job => Number.isFinite(parseFloat(job.lat)) && Number.isFinite(parseFloat(job.lng)));
+  if (hasCoords) {
+    filtered.forEach(job => {
+      const community = job.community || job.province || 'Sin región';
+      counts[community] = (counts[community] || 0) + 1;
+    });
+  } else {
+    // Fallback: group by city/location when no coordinates are available
+    filtered.forEach(job => {
+      const city = job.city || job.location || 'Sin localidad';
+      counts[city] = (counts[city] || 0) + 1;
+    });
+  }
 
   summary.innerHTML = total === 0
     ? '<div class="mini-summary__total">0 ofertas totales</div><div class="mini-summary__list"><div class="mini-summary__item"><span>No hay resultados</span></div></div>'
@@ -285,7 +294,7 @@ function renderJobs() {
 
   markerLayer.clearLayers();
 
-  if (filtered.length) {
+  if (filtered.length && hasCoords) {
     const bounds = [];
     filtered.forEach(job => {
       const lat = parseFloat(job.lat);
@@ -357,9 +366,21 @@ function updateSearchResults() {
 function focusJobOnMap(job) {
   const lat = parseFloat(job.lat);
   const lng = parseFloat(job.lng);
-  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
-
   closeModal();
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    // No coordinates: show info at current map center
+    const center = map.getCenter();
+    L.popup({ autoClose: false, closeOnClick: false })
+      .setLatLng(center)
+      .setContent(`
+        <strong>${job.title}</strong><br>
+        ${job.company}<br>
+        ${job.location || job.city || 'Sin localidad'}<br>
+        ${job.category} · ${capitalize(job.type)}
+      `)
+      .openOn(map);
+    return;
+  }
   map.flyTo([lat, lng], 11, { animate: true });
   L.popup({ autoClose: false, closeOnClick: false })
     .setLatLng([lat, lng])

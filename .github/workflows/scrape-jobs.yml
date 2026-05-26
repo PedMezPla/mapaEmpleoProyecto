@@ -19,11 +19,15 @@ jobs:
 
       - name: Install dependencies
         run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
           python -m pip install --upgrade pip
           pip install -r scrapers/requirements.txt
+          python -m playwright install
 
-      - name: Run InfoJobs scraper
-        run: python scrapers/infojobs_scraper.py --output data/infojobs.json
+      - name: Run InfoJobs scraper (under Xvfb)
+        run: |
+          xvfb-run -s "-screen 0 1920x1080x24" python scrapers/infojobs_scraper.py --output data/infojobs.json --pages 300
 
       - name: Run generic scraper
         run: python scrapers/generic_scraper.py --output data/generic.json

@@ -104,9 +104,10 @@ body {
 
 .filter-modal__dialog {
   position: relative;
-  width: min(95vw, 420px);
-  max-height: none;
+  width: min(96vw, 420px);
+  max-height: 92vh;
   overflow-y: visible;
+  font-size: clamp(14px, 1.6vw, 16px);
   background: rgba(15,23,42,.97);
   border: 1px solid rgba(255,255,255,.18);
   border-radius: 24px;
@@ -114,6 +115,28 @@ body {
   box-shadow: 0 28px 70px rgba(0,0,0,.35);
   color: #fff;
   z-index: 1310;
+}
+
+@media (max-width: 480px) {
+  .filter-modal {
+    align-items: flex-start;
+    padding-top: 1rem;
+  }
+  .filter-modal__dialog {
+    width: calc(100% - 2rem);
+    border-radius: 14px;
+    padding: 0.9rem;
+    margin: 0 1rem;
+    font-size: clamp(13px, 2.8vw, 15px);
+  }
+  .filter-modal__close {
+    top: .5rem;
+    right: .5rem;
+  }
+  .filter-options button {
+    padding: .35rem .6rem;
+    font-size: .82rem;
+  }
 }
 
 .filter-modal__close {

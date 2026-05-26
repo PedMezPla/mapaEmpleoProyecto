@@ -5,11 +5,16 @@ import time
 from datetime import datetime
 from urllib.parse import urljoin
 
+try:
+    import cloudscraper
+except ImportError:
+    cloudscraper = None
+
 import requests
 from bs4 import BeautifulSoup
 
 BASE_URL = 'https://www.infojobs.net'
-SEARCH_PATH = '/jobsearch/search-results/list.xhtml'
+SEARCH_PATH = '/ofertas-trabajo'
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
                   '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
@@ -34,14 +39,15 @@ def normalize_job(raw):
         'title': raw.get('title') or '',
         'company': raw.get('company') or '',
         'location': raw.get('location') or '',
+        'city': raw.get('location') or raw.get('city') or '',
         'province': raw.get('province') or '',
         'community': raw.get('community') or '',
         'category': raw.get('category') or '',
         'type': raw.get('type') or 'all',
         'portal': 'InfoJobs',
         'status': raw.get('status', 'active'),
-        'lat': raw.get('lat'),
-        'lng': raw.get('lng'),
+        'lat': None,
+        'lng': None,
         'url': raw.get('url') or '',
         'updated_at': raw.get('updated_at') or datetime.utcnow().isoformat()
     }
@@ -59,13 +65,51 @@ def build_url(link):
     return urljoin(BASE_URL + '/', link)
 
 
+BLOCKED_HTML_MARKERS = [
+    'No podemos identificar tu navegador',
+    'distil/captcha.xhtml',
+    'window.onProtectionInitialized',
+    'ijlibrarym.js'
+]
+
+
+def is_blocked_html(html):
+    return any(marker in html for marker in BLOCKED_HTML_MARKERS)
+
+
+def fetch_page_playwright(url):
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        print('Playwright no está instalado; no se puede usar el fallback de navegador.')
+        return None
+
+    print('InfoJobs blocked access direct; usando navegador real con Playwright...')
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=False)
+        page = browser.new_page(user_agent=HEADERS['User-Agent'])
+        page.goto(url, wait_until='networkidle', timeout=60000)
+        page.wait_for_timeout(20000)
+        content = page.content()
+        browser.close()
+        return content
+
+
 def fetch_page(url, session=None):
     if session is None:
-        session = requests.Session()
+        if cloudscraper is not None:
+            session = cloudscraper.create_scraper()
+        else:
+            session = requests.Session()
         session.headers.update(HEADERS)
     response = session.get(url, timeout=20)
     response.raise_for_status()
-    return response.text
+    html = response.text
+    if is_blocked_html(html):
+        browser_html = fetch_page_playwright(url)
+        if browser_html:
+            return browser_html
+    return html
 
 
 def extract_json_payload(script_text, variable_name='window.__INITIAL_PROPS__'):
@@ -187,7 +231,7 @@ def parse_job_card(card):
 
 def scrape_infojobs(max_pages=2):
     jobs = []
-    session = requests.Session()
+    session = cloudscraper.create_scraper() if cloudscraper is not None else requests.Session()
     session.headers.update(HEADERS)
     for page in range(1, max_pages + 1):
         url = f'{BASE_URL}{SEARCH_PATH}?page={page}'
