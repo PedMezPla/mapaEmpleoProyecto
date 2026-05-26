@@ -1,0 +1,40 @@
+name: Scrape and publish job feed
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+    - cron: '0 14 * * *'
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r scrapers/requirements.txt
+
+      - name: Run InfoJobs scraper
+        run: python scrapers/infojobs_scraper.py --output data/infojobs.json
+
+      - name: Run generic scraper
+        run: python scrapers/generic_scraper.py --output data/generic.json
+
+      - name: Merge normalized feeds
+        run: python scrapers/export_json.py --output public/jobs.json --sources data/infojobs.json data/generic.json
+
+      - name: Deploy job feed to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: public
+          publish_branch: gh-pages
+          keep_files: true

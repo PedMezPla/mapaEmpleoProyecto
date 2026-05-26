@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Mapa de Empleo España</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+<div class="container">
+  <div class="topbar">
+    <button id="open-filters" class="filter-open-button" type="button">Cambiar filtros</button>
+  </div>
+
+  <div id="summary" class="mini-summary"></div>
+  <div id="map" class="map"></div>
+
+  <div id="filter-modal" class="filter-modal" aria-hidden="true">
+    <div class="filter-modal__backdrop" data-close="true"></div>
+    <div class="filter-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="filter-modal-title">
+      <button id="close-filters" class="filter-modal__close" type="button" aria-label="Cerrar filtros">×</button>
+      <h2 id="filter-modal-title">Selecciona tus filtros</h2>
+      <p class="filter-modal__copy">Elige comunidad, modalidad y categoría para cargar solo los datos relevantes.</p>
+
+      <div class="filter-field">
+        <label>Comunidad</label>
+        <div id="modal-community" class="filter-options"></div>
+      </div>
+
+      <div class="filter-field">
+        <label>Modalidad</label>
+        <div id="modal-type" class="filter-options"></div>
+      </div>
+
+      <div class="filter-field">
+        <label>Categoría</label>
+        <div id="modal-category" class="filter-options"></div>
+      </div>
+
+      <div class="filter-field">
+        <label>Filtrar palabra</label>
+        <input id="modal-search" type="search" placeholder="Nombre o palabra clave (opcional)" class="modal-search-input">
+      </div>
+
+      <div id="search-results" class="search-results"></div>
+
+      <div class="modal-actions">
+        <button id="apply-filters" class="apply-button" type="button">Mostrar ofertas</button>
+        <button id="reset-filters" class="reset-button" type="button">Restablecer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
