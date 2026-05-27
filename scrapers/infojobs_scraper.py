@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import os
 import time
 from datetime import datetime
 from urllib.parse import urljoin
@@ -264,6 +265,9 @@ def scrape_infojobs(max_pages=2):
 
 def main(output_path, max_pages):
     jobs = scrape_infojobs(max_pages=max_pages)
+    output_dir = os.path.dirname(output_path)
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(jobs, f, ensure_ascii=False, indent=2)
     print(f'InfoJobs scraped {len(jobs)} offers into {output_path}')

@@ -27,6 +27,7 @@ jobs:
 
       - name: Run InfoJobs scraper (under Xvfb)
         run: |
+          mkdir -p data
           xvfb-run -s "-screen 0 1920x1080x24" python scrapers/infojobs_scraper.py --output data/infojobs.json --pages 300
 
       - name: Run generic scraper
